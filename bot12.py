@@ -1,6 +1,6 @@
 import numpy as np
 import math
-import random #ASK ABT THIS
+import random  #ASK ABT THIS
 
 #1: Ask and test make_move
 #2: Simulate CHECK
@@ -75,12 +75,9 @@ class Jaspers_MCTS_Agent:
 
     print(reward)
 
-
-
     # Backpropogate: Propogate ___ up the tree for node UCB scores (i think)
     # self.backpropogate(selected_leaf_node, reward)
 
-    
     # print(reward)
 
     # count += 1
@@ -91,7 +88,7 @@ class Jaspers_MCTS_Agent:
     #BACKPROPOGATE, adding outcome and visit count up
     while selected_leaf_node.parent is not None:
       #naming here is not consistent; selected_leaf_node, but after first while iteration, not a leaf node, since backpropogated.
-      selected_leaf_node.parent.outcome += reward 
+      selected_leaf_node.parent.outcome += reward
       selected_leaf_node.parent.visits += 1
       selected_leaf_node = selected_leaf_node.parent
 
@@ -101,29 +98,93 @@ class Jaspers_MCTS_Agent:
     whos_move_value = self.whos_move_value(selected_leaf_node)
 
     valid_moves = selected_leaf_node.valid_moves
-    print(valid_moves)
+    # print(valid_moves)
     board_state = selected_leaf_node.state
     active_box = selected_leaf_node.active_box
 
     # Simulate the game until it ends
+    count = 0
+    flag = False
     while self.get_outcome(board_state) == -3:  #-3 is game is not over
-      #randomly play one move
-      move = random.choice(valid_moves)
+      if(len(valid_moves)==1 or flag):
+        if(flag):
+            flag = False
+        return
+      else:
+        #randomly play one move
+        move = random.choice(valid_moves)
+        # if move leads to finished game, then skip it
+        # What is a move? it is a tuple of coordinates. if this tuple leads to a finished game, then skip it
+        move_leads_to_finished_game = self.move_leads_to_a_finished_game(move, board_state)
+        if(move_leads_to_finished_game):
+            if(count >4):
+                flag = True
+            count+=1
+            continue #goes back and gets a new move
+            
       #update whos turn
       whos_move_value *= -1
       #update board state, valid moves, active box with make_move
       board_state, valid_moves, active_box = self.make_move(
           move, board_state, whos_move_value)
-      
+
     # Now we have reached a terminal state, set the value of the game to the leaf node
     outcome_value = self.get_outcome(board_state)
     return outcome_value
 
+  def move_leads_to_a_finished_game(self, move, board_state):
+    ''' Check if the move leads to a finished game '''
+    new_active_box = self.active_box_after_move(move, board_state)
+    #if that box is done. return True
+    if self.subgame_terminated != -3: # game is done
+      return True
+    
+    return False
+    
+  
+
+  def active_box_after_move(self, move, board_state):
+    ''' returns the active box after the move is made '''
+    #GOES TO THIS BOX
+
+    subbox = move
+  
+    box22 = [(6, 6), (6, 7), (6, 8), (7, 6), (7, 7), (7, 8), (8, 6), (8, 7), (8, 8)]
+    box21 = [(6, 3), (6, 4), (6, 5), (7, 3), (7, 4), (7, 5), (8, 3), (8, 4),(8, 5)]
+    box20 = [(6, 0), (6, 1), (6, 2), (7, 0), (7, 1), (7, 2), (8, 0), (8, 1),(8, 2)]
+    box12 = [(3, 6), (3, 7), (3, 8), (4, 6), (4, 7), (4, 8), (5, 6), (5, 7),(5, 8)]
+    box11 = [(3, 3), (3, 4), (3, 5), (4, 3), (4, 4), (4, 5), (5, 3), (5, 4),(5, 5)]
+    box10 = [(3, 0), (3, 1), (3, 2), (4, 0), (4, 1), (4, 2), (5, 0), (5, 1),(5, 2)]
+    box02 = [(0, 6), (0, 7), (0, 8), (1, 6), (1, 7), (1, 8), (2, 6), (2, 7),(2, 8)]
+    box01 = [(0, 3), (0, 4), (0, 5), (1, 3), (1, 4), (1, 5), (2, 3), (2, 4),(2, 5)]
+    box00 = [(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2), (2, 0), (2, 1),(2, 2)]
+
+    if subbox in box00:
+      new_active_box = (0, 0)
+    elif subbox in box01:
+      new_active_box = (0, 1)
+    elif subbox in box02:
+      new_active_box = (0, 2)
+    elif subbox in box10:
+      new_active_box = (1, 0)
+    elif subbox in box11:
+      new_active_box = (1, 1)
+    elif subbox in box12:
+      new_active_box = (1, 2)
+    elif subbox in box20:
+      new_active_box = (2, 0)
+    elif subbox in box21:
+      new_active_box = (2, 1)
+    elif subbox in box22:
+      new_active_box = (2, 2)
+      
+    return new_active_box
+
   def get_outcome(self, board_state):
+    ''' Big game outcome '''
     #Check for which mini games are over and their result
     #Go through mini games 00 to 22, check if they are over,
-    mini_game_tuples = [(i, j) for i in range(3)
-                        for j in range(3)]  #List of mini board coordinates
+    mini_game_tuples = [(i, j) for i in range(3) for j in range(3)]  #List of mini board coordinates
     mini_game_outcomes = []
     for mini_game_tuple in mini_game_tuples:
       mini_game_state = self.pull_mini_board(board_state, mini_game_tuple)
@@ -261,21 +322,26 @@ class Jaspers_MCTS_Agent:
       new_active_box = (2, 2)
 
     #Now we have active box for next move
+
+      #Return 0.2 as a reward
+
     #Get valid moves in new active box
     new_mini_board = self.pull_mini_board(current_state, new_active_box)
     new_mini_board = self.invert_mini_board(new_mini_board)
 
-    if self.subgame_terminated(new_mini_board) != -3:  #ADD BACK AND DEBUG
+    # case: the box is (-1 -1)
+    if self.subgame_terminated(new_mini_board) != -3:
       new_active_box = (-1, -1)
-
-    #VALID MOVES CHANGES WHEN WE CAN GO ANYWHERE^^
 
     new_valid_moves = self.from_mini_to_big(
         new_mini_board,
         new_active_box)  #new_valid_moves is in terms of the 9x9 matrix
 
     #Have a list of valid moves in the new mini board
-    return [current_state, new_valid_moves, new_active_box]
+
+    #Hmmmmm
+    return [current_state, new_valid_moves, new_active_box
+            ]  # new active is where we play next move, so where did we play
 
   def from_mini_to_big(self, new_mini_board, new_active_box):
     # print(new_mini_board)
@@ -329,7 +395,7 @@ class Jaspers_MCTS_Agent:
       elif np.all(mini_board[i, :] == -1) or np.all(mini_board[:, i] == -1):
         return 0  # Player 2 wins
 
-# Check diagonals
+    # Check diagonals
     if np.all(np.diag(mini_board) == 1) or np.all(
         np.diag(np.fliplr(mini_board)) == 1):
       return 1  # Player 1 wins
