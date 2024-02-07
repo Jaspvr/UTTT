@@ -4,6 +4,7 @@ import random
 
 #When the new game is done, the move that gets passed in is an array of tuples instead of a single tuple.
 # Check logic for when the subgame is terminated
+#Line 70 in test_make_move.py
 
 # Expansion works - simulation has issues when (-1, -1) 
 # Sim will switch boxes on the first time, but then not switch from that next box. Also ALWAYS goes top left
@@ -124,7 +125,7 @@ class Jaspers_MCTS_Agent:
 
     # Now we have reached a terminal state, set the value of the game to the leaf node
     outcome_value = self.get_outcome(board_state)
-    # print(board_state)
+    print(board_state)
     return outcome_value
 
   def move_leads_to_a_finished_game(self, move, board_state):
@@ -342,8 +343,16 @@ class Jaspers_MCTS_Agent:
       for tuple_revised in tuples_revised:
         # want to get all tuple places on in any of these squares
         all_moves.append(self.get_coordinates_in_submatrix(tuple_revised))
+
+      #Check for spaces of '0'. these are our valid moves
+      new_valid_moves = []
+      for move_list in all_moves:
+        for move_tuple in move_list:
+          if new_state[move_tuple[0], move_tuple[1]] == 0:
+            new_valid_moves.append(move_tuple)
+
     
-      new_valid_moves = all_moves
+      # new_valid_moves = all_moves
     #   print(new_valid_moves)
       return [new_state, new_valid_moves, new_active_box]  # new active is where we play next move, so where did we play
 

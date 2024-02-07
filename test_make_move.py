@@ -82,7 +82,7 @@ def make_move(move, current_state, whos_move_value): #Valid moves are wrong! nee
         all_moves.append(get_coordinates_in_submatrix(tuple_revised))
     
       new_valid_moves = all_moves
-    #   print(new_valid_moves)
+      
       return [new_state, new_valid_moves, new_active_box]  # new active is where we play next move, so where did we play
 
       #Return 0.2 as a reward
