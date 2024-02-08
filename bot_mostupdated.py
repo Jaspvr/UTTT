@@ -2,6 +2,10 @@ import numpy as np
 import math
 import random
 
+#Everything works up until backpropogate (simulation works)
+
+#WORK ON GET_OUTCOME
+
 #When the new game is done, the move that gets passed in is an array of tuples instead of a single tuple.
 # Check logic for when the subgame is terminated
 #Line 70 in test_make_move.py
@@ -27,6 +31,7 @@ class TreeNode:
                move=None,
                active_box=None,
                valid_moves=None,
+               visits=None,
                outcome=None,
                depth=None):  #pass in state, unsure about parent and move
     self.state = state
@@ -52,45 +57,67 @@ class Jaspers_MCTS_Agent:
         'active_box']  #(x, y) tuple of coordinates of the smaller 3x3 game
     valid_moves = board_dict[
         'valid_moves']  #list of all valid moves, i.e list of tuples - BIG BOARD
-
-    # count = 0
-    # while count < 5:
-
-    #Selection phase: Traverse from the root node to a leaf node
+    
     root_state = board_state
     root_node = TreeNode(root_state,
-                         active_box=active_box,
-                         valid_moves=valid_moves,
-                         depth=0)
-    selected_leaf_node = self.selection(
-        root_node
-    )  # we now have the leaf node to work with. for the root node, selection function will just return back the same node
+                          active_box=active_box,
+                          valid_moves=valid_moves,
+                          visits=1,
+                          depth=0, 
+                          )
 
-    # Expansion Phase: our selected node is a leaf node, we have to create its children with all the possible valid moves from that place
-    self.expansion(selected_leaf_node, selected_leaf_node.valid_moves
-                   )  #We have now expanded. We should simulate
+    count = 0
+    while count < 100:
 
-    # self.print_tree(root_node) ##LOOKS GOOD FOR NOW UP TO HERE
+      #Selection phase: Traverse from the root node to a leaf node
+      selected_leaf_node = self.selection(
+          root_node
+      )  # we now have the leaf node to work with. for the root node, selection function will just return back the same node
 
-    # Simulation Phase: simulate down the tree until terminal state is reached
-    reward = self.simulation(
-        selected_leaf_node
-    )  #return the value of the game end (win, draw, loss)
-    print(reward)
+      # Expansion Phase: our selected node is a leaf node, we have to create its children with all the possible valid moves from that place
+      flag = False
+      if(selected_leaf_node.visits != 0): #Account for case of not visited the node before
+        self.expansion(selected_leaf_node, selected_leaf_node.valid_moves
+                      )  #We have now expanded. We should simulate
+      else: 
+        selected_leaf_node.visits += 1
+        flag = True
 
-    # Backpropogate: Propogate ___ up the tree for node UCB scores (i think)
-    # self.backpropogate(selected_leaf_node, reward)
-    # print(reward)
-    # count += 1
+      # self.print_tree(root_node) ##LOOKS GOOD FOR NOW UP TO HERE
 
-    return valid_moves[0]  # placeholder
+      # Simulation Phase: simulate down the tree until terminal state is reached
+      reward = self.simulation(
+          selected_leaf_node
+      )  #return the value of the game end (win, draw, loss)
+      # print(reward)
+      # if flag:
+      #   selected_leaf_node.visits -= 1
+
+      #WORKS UP TO HERE
+
+      # Backpropogate: Propogate ___ up the tree for node UCB scores (i think)
+      self.backpropogate(selected_leaf_node, reward)
+      count += 1
+    
+    # self.print_tree(root_node)
+    # Find the best move (highest number of visits? )
+    max_value = -1
+    max_child = None
+    for child in root_node.children:
+      if child.visits > max_value:
+        max_child = child
+  
+    move_to_make = max_child.init_move
+
+    return move_to_make  # placeholder
 
   def backpropogate(self, selected_leaf_node, reward):
     #BACKPROPOGATE, adding outcome and visit count up
+
     while selected_leaf_node.parent is not None:
       #naming here is not consistent; selected_leaf_node, but after first while iteration, not a leaf node, since backpropogated.
-      selected_leaf_node.parent.outcome += reward
-      selected_leaf_node.parent.visits += 1
+      selected_leaf_node.value += reward
+      selected_leaf_node.visits += 1
       selected_leaf_node = selected_leaf_node.parent
 
   def simulation(self, selected_leaf_node):
@@ -113,6 +140,7 @@ class Jaspers_MCTS_Agent:
       #   break
 
       #randomly play one move
+      # print(board_state, valid_moves)
       move = random.choice(valid_moves)
     
       #update board state, valid moves, active box with make_move
@@ -125,7 +153,16 @@ class Jaspers_MCTS_Agent:
 
     # Now we have reached a terminal state, set the value of the game to the leaf node
     outcome_value = self.get_outcome(board_state)
-    print(board_state)
+    # print(board_state)
+    count1 = 0
+    count2 = 0
+    for i in board_state:
+      for j in i:
+        if j == 1:
+          count1 +=1
+        if j == -1:
+          count2 += 1
+    # print(count1, count2)
     return outcome_value
 
   def move_leads_to_a_finished_game(self, move, board_state):
@@ -199,7 +236,7 @@ class Jaspers_MCTS_Agent:
       elif mini_game_outcome == 1:  #win
         mini_game_outcomes.append(1)
       elif mini_game_outcome == 0.5:  #draw
-        mini_game_outcomes.append(0)
+        mini_game_outcomes.append(0.5)
       elif mini_game_outcome == 0:  #loss
         mini_game_outcomes.append(-1)
 
@@ -207,10 +244,35 @@ class Jaspers_MCTS_Agent:
     # Put the result in a new 3x3 representing the big board
     mini_game_outcomes_matrix = np.array(mini_game_outcomes).reshape(3, 3)
     #Check big game
-    big_game_outcome = self.subgame_terminated(mini_game_outcomes_matrix)
+    big_game_outcome = self.big3x3_terminated(mini_game_outcomes_matrix)
     return big_game_outcome
+  
+  def big3x3_terminated(self, mini_board):
+    ''' Check if 3x3 representing the big board game is over '''
+    # Check rows and columns
+    for i in range(3):
+      if np.all(mini_board[i, :] == 1) or np.all(mini_board[:, i] == 1):
+        return 1  # Player 1 wins
+      elif np.all(mini_board[i, :] == -1) or np.all(mini_board[:, i] == -1):
+        return 0  # Player 2 wins
+
+    # Check diagonals
+    if np.all(np.diag(mini_board) == 1) or np.all(
+        np.diag(np.fliplr(mini_board)) == 1):
+      return 1  # Player 1 wins
+    elif np.all(np.diag(mini_board) == -1) or np.all(
+        np.diag(np.fliplr(mini_board)) == -1):
+      return 0  # Player 2 wins
+
+    # Check for a draw
+    if np.count_nonzero(mini_board == 0) == 0:
+      return 0.5  # Draw
+
+    # If no winner yet
+    return -3
 
   def whos_move_value(self, node):
+
     whos_move_value = node.depth % 2  #0 is us(move is 1 on board), 1 is opponent (then move is -1 on the board)
     if whos_move_value == 0:
       whos_move_value = 1
@@ -229,11 +291,12 @@ class Jaspers_MCTS_Agent:
     while not all(child is None for child in
                   node.children):  #at a leaf node when all children are None
       # Calculate UCB values for each child node
+      # if node.visits==0:
+      #   break
       ucb_values = [
           self.calculate_ucb(child, exploration_constant, node.visits)
           for child in node.children
       ]  #cheeky list comprehension
-      #   print(ucb_values)
 
       # Select the child node with the highest UCB value
       selected_index = ucb_values.index(max(ucb_values))
@@ -248,6 +311,7 @@ class Jaspers_MCTS_Agent:
       return float('inf')  # Prioritize unvisited nodes
     else:
       exploitation_term = node.value / node.visits
+      # print(parent_visits, node.visits)
       exploration_term = exploration_constant * math.sqrt(
           math.log(parent_visits) / node.visits)
       return exploitation_term + exploration_term
@@ -474,4 +538,4 @@ mcts_agent = Jaspers_MCTS_Agent()
 selected_move = mcts_agent.move(board_dict)
 
 # Inspect output
-# print("Selected move:", selected_move)x
+print("Selected move:", selected_move)
