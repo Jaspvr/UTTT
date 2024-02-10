@@ -2,7 +2,6 @@ import numpy as np
 import math
 import random
 
-# Get it to work on ipynb
 
 class TreeNode:
   def __init__(self,
