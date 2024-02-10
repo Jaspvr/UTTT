@@ -46,7 +46,7 @@ class Jaspers_MCTS_Agent:
                           )
 
     count = 0
-    while count < 50:
+    while count < 25:
 
       #Selection phase: Traverse from the root node to a leaf node
       selected_leaf_node = self.selection(
@@ -135,24 +135,15 @@ class Jaspers_MCTS_Agent:
 
     subbox = move
 
-    box22 = [(6, 6), (6, 7), (6, 8), (7, 6), (7, 7), (7, 8), (8, 6), (8, 7),
-             (8, 8)]
-    box21 = [(6, 3), (6, 4), (6, 5), (7, 3), (7, 4), (7, 5), (8, 3), (8, 4),
-             (8, 5)]
-    box20 = [(6, 0), (6, 1), (6, 2), (7, 0), (7, 1), (7, 2), (8, 0), (8, 1),
-             (8, 2)]
-    box12 = [(3, 6), (3, 7), (3, 8), (4, 6), (4, 7), (4, 8), (5, 6), (5, 7),
-             (5, 8)]
-    box11 = [(3, 3), (3, 4), (3, 5), (4, 3), (4, 4), (4, 5), (5, 3), (5, 4),
-             (5, 5)]
-    box10 = [(3, 0), (3, 1), (3, 2), (4, 0), (4, 1), (4, 2), (5, 0), (5, 1),
-             (5, 2)]
-    box02 = [(0, 6), (0, 7), (0, 8), (1, 6), (1, 7), (1, 8), (2, 6), (2, 7),
-             (2, 8)]
-    box01 = [(0, 3), (0, 4), (0, 5), (1, 3), (1, 4), (1, 5), (2, 3), (2, 4),
-             (2, 5)]
-    box00 = [(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2), (2, 0), (2, 1),
-             (2, 2)]
+    box22 = [(6, 6), (6, 7), (6, 8), (7, 6), (7, 7), (7, 8), (8, 6), (8, 7),(8, 8)]
+    box21 = [(6, 3), (6, 4), (6, 5), (7, 3), (7, 4), (7, 5), (8, 3), (8, 4),(8, 5)]
+    box20 = [(6, 0), (6, 1), (6, 2), (7, 0), (7, 1), (7, 2), (8, 0), (8, 1),(8, 2)]
+    box12 = [(3, 6), (3, 7), (3, 8), (4, 6), (4, 7), (4, 8), (5, 6), (5, 7),(5, 8)]
+    box11 = [(3, 3), (3, 4), (3, 5), (4, 3), (4, 4), (4, 5), (5, 3), (5, 4),(5, 5)]
+    box10 = [(3, 0), (3, 1), (3, 2), (4, 0), (4, 1), (4, 2), (5, 0), (5, 1),(5, 2)]
+    box02 = [(0, 6), (0, 7), (0, 8), (1, 6), (1, 7), (1, 8), (2, 6), (2, 7),(2, 8)]
+    box01 = [(0, 3), (0, 4), (0, 5), (1, 3), (1, 4), (1, 5), (2, 3), (2, 4),(2, 5)]
+    box00 = [(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2), (2, 0), (2, 1),(2, 2)]
 
     if subbox in box00:
       new_active_box = (0, 0)
@@ -366,7 +357,7 @@ class Jaspers_MCTS_Agent:
 
     else:
         #Get valid moves in new active box
-        new_mini_board = self.pull_mini_board(current_state, new_active_box)
+        new_mini_board = self.pull_mini_board(new_state, new_active_box)
 
         new_valid_moves = self.from_mini_to_big(
             new_mini_board,
@@ -457,26 +448,26 @@ class Jaspers_MCTS_Agent:
 ## For Testing/debugging
 
 # Mock input data
-board_dict = {
-    'board_state': np.zeros((9, 9)),  # Example of a 9x9 board with all zeros
-    'active_box': (1, 1),  # Example of the active box
-    'valid_moves': [(3, 3), (3, 4), (3, 5), (4, 3), (4, 5), (5, 3), (5, 4),
-                    (5, 5)]  # Example of valid moves
-}
-# First opponent move
-board_dict['board_state'][4, 4] = -1
-board_state = board_dict['board_state']
+# board_dict = {
+#     'board_state': np.zeros((9, 9)),  # Example of a 9x9 board with all zeros
+#     'active_box': (1, 1),  # Example of the active box
+#     'valid_moves': [(3, 3), (3, 4), (3, 5), (4, 3), (4, 5), (5, 3), (5, 4),
+#                     (5, 5)]  # Example of valid moves
+# }
+# # First opponent move
+# board_dict['board_state'][4, 4] = -1
+# board_state = board_dict['board_state']
 
-# Instantiate MCTS agent
-mcts_agent = Jaspers_MCTS_Agent()
+# # Instantiate MCTS agent
+# mcts_agent = Jaspers_MCTS_Agent()
 
-# Test expansion - Print the tree
-# root_node = TreeNode(board_dict['board_state'])
-# mcts_agent.expansion(root_node, [(1, 1), (2, 2), (3, 3)])  # Example valid moves
-# mcts_agent.print_tree(root_node)
+# # Test expansion - Print the tree
+# # root_node = TreeNode(board_dict['board_state'])
+# # mcts_agent.expansion(root_node, [(1, 1), (2, 2), (3, 3)])  # Example valid moves
+# # mcts_agent.print_tree(root_node)
 
-# Call move function
-selected_move = mcts_agent.move(board_dict)
+# # Call move function
+# selected_move = mcts_agent.move(board_dict)
 
-# Inspect output
-print("Selected move:", selected_move)
+# # Inspect output
+# print("Selected move:", selected_move)
