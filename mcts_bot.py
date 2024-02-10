@@ -112,11 +112,9 @@ class Jaspers_MCTS_Agent:
 
 
   def active_box_after_move(self, move, board_state):
-    ''' returns the active box after the move is made '''
-    #GOES TO THIS BOX
+    ''' Returns the active box after the move is made '''
 
-    subbox = move
-
+    # Each tuple in a given list is a move that will lead to the next active box being the list name ((6, 6) maps to big board box (2, 2))
     box22 = [(6, 6), (6, 7), (6, 8), (7, 6), (7, 7), (7, 8), (8, 6), (8, 7),(8, 8)]
     box21 = [(6, 3), (6, 4), (6, 5), (7, 3), (7, 4), (7, 5), (8, 3), (8, 4),(8, 5)]
     box20 = [(6, 0), (6, 1), (6, 2), (7, 0), (7, 1), (7, 2), (8, 0), (8, 1),(8, 2)]
@@ -127,23 +125,23 @@ class Jaspers_MCTS_Agent:
     box01 = [(0, 3), (0, 4), (0, 5), (1, 3), (1, 4), (1, 5), (2, 3), (2, 4),(2, 5)]
     box00 = [(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2), (2, 0), (2, 1),(2, 2)]
 
-    if subbox in box00:
+    if move in box00:
       new_active_box = (0, 0)
-    elif subbox in box01:
+    elif move in box01:
       new_active_box = (0, 1)
-    elif subbox in box02:
+    elif move in box02:
       new_active_box = (0, 2)
-    elif subbox in box10:
+    elif move in box10:
       new_active_box = (1, 0)
-    elif subbox in box11:
+    elif move in box11:
       new_active_box = (1, 1)
-    elif subbox in box12:
+    elif move in box12:
       new_active_box = (1, 2)
-    elif subbox in box20:
+    elif move in box20:
       new_active_box = (2, 0)
-    elif subbox in box21:
+    elif move in box21:
       new_active_box = (2, 1)
-    elif subbox in box22:
+    elif move in box22:
       new_active_box = (2, 2)
 
     return new_active_box
@@ -304,16 +302,16 @@ class Jaspers_MCTS_Agent:
     elif move in box22:
       new_active_box = (2, 2)
 
-    #Now we have active box for next move
+    # Now we have the active box for next move
 
-    # case: the box is (-1 -1)
+    # Get all of the valid moves
     all_moves = []
-    # get miniboard for our tuple
     new_mini_board = self.pull_mini_board(new_state, new_active_box)
 
     if self.subgame_terminated(new_mini_board) != -3:
       new_active_box = (-1, -1)
 
+    # Case: the subgame is terminated - we have go to any available space on the board
     if new_active_box == (-1, -1):
       tuple_list = [(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2), (2, 0), (2, 1), (2, 2)]
       tuples_revised = []
@@ -325,25 +323,22 @@ class Jaspers_MCTS_Agent:
 
       # We now have a revised list of tuples of non finished games
       for tuple_revised in tuples_revised:
-        # want to get all tuple places on in any of these squares
+        # We want to get all tuple places on in any of these squares
         all_moves.append(self.get_coordinates_in_submatrix(tuple_revised))
 
-      #Check for spaces of '0'. these are our valid moves
+      # Check for spaces of '0'. these are our valid moves
       new_valid_moves = []
       for move_list in all_moves:
         for move_tuple in move_list:
           if new_state[move_tuple[0], move_tuple[1]] == 0:
             new_valid_moves.append(move_tuple)
 
-      return [new_state, new_valid_moves, new_active_box]  # new active is where we play next move, so where did we play
+      return [new_state, new_valid_moves, new_active_box]
 
     else:
         #Get valid moves in new active box
         new_mini_board = self.pull_mini_board(new_state, new_active_box)
-
-        new_valid_moves = self.from_mini_to_big(
-            new_mini_board,
-            new_active_box)  #new_valid_moves is in terms of the 9x9 matrix
+        new_valid_moves = self.from_mini_to_big(new_mini_board,new_active_box)  # new_valid_moves is in terms of the 9x9 matrix
 
         #Have a list of valid moves in the new mini board
         return [new_state, new_valid_moves, new_active_box] 
