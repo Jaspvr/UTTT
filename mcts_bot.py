@@ -344,6 +344,7 @@ class Jaspers_MCTS_Agent:
         return [new_state, new_valid_moves, new_active_box] 
     
   def get_coordinates_in_submatrix(self, coord_tuple):
+    ''' Return all coordinates of a subgame given that subgame's location on the big game '''
     submatrix_coordinates = []
     for row in range(3):
         for col in range(3):
@@ -351,8 +352,7 @@ class Jaspers_MCTS_Agent:
     return submatrix_coordinates
 
   def from_mini_to_big(self, new_mini_board, new_active_box):
-
-    #This allows us to switch between 3x3 and 9x9
+    ''' Mini game moves to big game moves '''
     box_mapping = {
         (0, 0): (0, 0),
         (0, 1): (0, 3),
@@ -379,8 +379,7 @@ class Jaspers_MCTS_Agent:
 
     return valid_moves_9x9
 
-  def pull_mini_board(self, board_state: np.array,
-                      mini_board_index: tuple) -> np.array:
+  def pull_mini_board(self, board_state: np.array, mini_board_index: tuple) -> np.array:
     ''' extracts a mini board from the 9x9 given the its index'''
     temp = board_state[mini_board_index[0] * 3:(mini_board_index[0] + 1) * 3,
                        mini_board_index[1] * 3:(mini_board_index[1] + 1) * 3]
@@ -410,9 +409,8 @@ class Jaspers_MCTS_Agent:
     # If no winner yet
     return -3
 
-  #Function is for testing
   def print_tree(self, node, level=0):
-    """Prints the tree from the given node."""
+    """ Prints the tree from the given node. """
     if node is not None:
       print(
           "  " * level +
@@ -425,26 +423,26 @@ class Jaspers_MCTS_Agent:
 ## For Testing/debugging
 
 # Mock input data
-board_dict = {
-    'board_state': np.zeros((9, 9)),  # Example of a 9x9 board with all zeros
-    'active_box': (1, 1),  # Example of the active box
-    'valid_moves': [(3, 3), (3, 4), (3, 5), (4, 3), (4, 5), (5, 3), (5, 4),
-                    (5, 5)]  # Example of valid moves
-}
-# First opponent move
-board_dict['board_state'][4, 4] = -1
-board_state = board_dict['board_state']
+# board_dict = {
+#     'board_state': np.zeros((9, 9)),  # Example of a 9x9 board with all zeros
+#     'active_box': (1, 1),  # Example of the active box
+#     'valid_moves': [(3, 3), (3, 4), (3, 5), (4, 3), (4, 5), (5, 3), (5, 4),
+#                     (5, 5)]  # Example of valid moves
+# }
+# # First opponent move
+# board_dict['board_state'][4, 4] = -1
+# board_state = board_dict['board_state']
 
-# Instantiate MCTS agent
-mcts_agent = Jaspers_MCTS_Agent()
+# # Instantiate MCTS agent
+# mcts_agent = Jaspers_MCTS_Agent()
 
-# Test expansion - Print the tree
-# root_node = TreeNode(board_dict['board_state'])
-# mcts_agent.expansion(root_node, [(1, 1), (2, 2), (3, 3)])  # Example valid moves
-# mcts_agent.print_tree(root_node)
+# # Test expansion - Print the tree
+# # root_node = TreeNode(board_dict['board_state'])
+# # mcts_agent.expansion(root_node, [(1, 1), (2, 2), (3, 3)])  # Example valid moves
+# # mcts_agent.print_tree(root_node)
 
-# Call move function
-selected_move = mcts_agent.move(board_dict)
+# # Call move function
+# selected_move = mcts_agent.move(board_dict)
 
-# Inspect output
-print("Selected move:", selected_move)
+# # Inspect output
+# print("Selected move:", selected_move)
