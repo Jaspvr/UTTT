@@ -13,11 +13,11 @@ class TreeNode:
                valid_moves=None,
                visits=None,
                outcome=None,
-               depth=None):  #pass in state, unsure about parent and move
+               depth=None):
     self.state = state
     self.parent = parent
     self.init_move = move
-    self.children = []  #up to 81 (free board with everything open)
+    self.children = [] 
     self.visits = 0  #initial is always 0
     self.value = 0  # initial is always 0
     self.active_box = active_box
@@ -26,93 +26,83 @@ class TreeNode:
     self.outcome = outcome
 
 class Jaspers_MCTS_Agent:
-
+  ''' Monte Carlo Search Tree UTTT player, move function returns it's next move '''
   def __init__(self, name: str = 'jaspers_bot', debug=True):
     self.name = name
 
   def move(self, board_dict: dict) -> tuple:
-    board_state = board_dict['board_state']  #9x9 numpy array
-    active_box = board_dict[
-        'active_box']  #(x, y) tuple of coordinates of the smaller 3x3 game
-    valid_moves = board_dict[
-        'valid_moves']  #list of all valid moves, i.e list of tuples - BIG BOARD
+    ''' Return the move that the agent wants to make given the current board state and available moves '''
+    board_state = board_dict['board_state']  # 9x9 numpy array
+    active_box = board_dict['active_box']  # (x, y) tuple of coordinates of the smaller 3x3 game
+    valid_moves = board_dict['valid_moves']  # List of all valid moves, i.e list of tuples - BIG BOARD
     
     root_state = board_state
     root_node = TreeNode(root_state,
-                          active_box=active_box,
-                          valid_moves=valid_moves,
-                          visits=1,
-                          depth=0, 
-                          )
+                        active_box=active_box,
+                        valid_moves=valid_moves,
+                        visits=1,
+                        depth=0, 
+                        )
 
+    # Search tree loop: builds out a game tree by performing a leaf node selection, expansion, simulation, and 
+    #   back propogation starting at the root node
     count = 0
-    while count < 40:
+    while count < 10:
 
       #Selection phase: Traverse from the root node to a leaf node
-      selected_leaf_node = self.selection(
-          root_node
-      )  # we now have the leaf node to work with. for the root node, selection function will just return back the same node
+      selected_leaf_node = self.selection(root_node)  # We now have the leaf node to work with
 
-      # Expansion Phase: our selected node is a leaf node, we have to create its children with all the possible valid moves from that place
-      flag = False
-      if(selected_leaf_node.visits != 0): #Account for case of not visited the node before
-        self.expansion(selected_leaf_node, selected_leaf_node.valid_moves
-                      )  #We have now expanded. We should simulate
-      else: 
+      # Expansion Phase: our selected node is a leaf node, we have to create a children with all the possible valid moves from that place
+      if(selected_leaf_node.visits != 0): #Account for case of not visited the node before (add 1 since this is a visit)
+        self.expansion(selected_leaf_node, selected_leaf_node.valid_moves)  #We have now expanded. We should simulate
+      else:
         selected_leaf_node.visits += 1
-        flag = True
 
       # Simulation Phase: simulate down the tree until terminal state is reached
-      reward = self.simulation(
-          selected_leaf_node
-      )  #return the value of the game end (win, draw, loss)
+      reward = self.simulation(selected_leaf_node)  #return the value of the game end (win, draw, loss)
 
-      # Backpropogate: Propogate ___ up the tree for node UCB scores (i think)
+      # Backpropogate: Propogate game outcome from simulation up the tree for node UCB scores
       self.backpropogate(selected_leaf_node, reward)
       count += 1
     
-    # Find the best move (highest number of visits? )
+    # Find the best move (currently accessing the highest number of visits)
     max_value = -1
     max_child = None
     for child in root_node.children:
       if child.visits > max_value:
         max_child = child
   
-    move_to_make = max_child.init_move
+    move_to_make = max_child.init_move  # Get the move cooresponding to the child node
 
     return move_to_make 
 
   def backpropogate(self, selected_leaf_node, reward):
-    #BACKPROPOGATE, adding outcome and visit count up
-
+    ''' Return add the value of the result of the simulation up the tree '''
     while selected_leaf_node.parent is not None:
-      #naming here is not consistent; selected_leaf_node, but after first while iteration, not a leaf node, since backpropogated.
       selected_leaf_node.value += reward
       selected_leaf_node.visits += 1
       selected_leaf_node = selected_leaf_node.parent
 
   def simulation(self, selected_leaf_node):
     ''' Simulate the game from the selected leaf node '''
-    # get whos turn, board state, active box, valid moves
+    # Get whos turn, board state, active box, valid moves
     whos_move_value = self.whos_move_value(selected_leaf_node)
-
     valid_moves = selected_leaf_node.valid_moves
-    # print(valid_moves)
     board_state = selected_leaf_node.state
     active_box = selected_leaf_node.active_box
 
-    # Simulate the game until it ends
+    # Simulate the game until it reaches a terminal state
     count = 0
     while True:  
-      if self.get_outcome(board_state) != -3: #-3 is game is not over
+      if self.get_outcome(board_state) != -3: # -3 means that the game is not over
         break
       move = random.choice(valid_moves)
     
-      #update board state, valid moves, active box with make_move
+      # Update board state, valid moves, active box with make_move
       board_state, valid_moves, active_box = self.make_move(
           move, board_state, whos_move_value)
 
-      #update whos turn
+      # Update whos turn
       whos_move_value *= -1
       count+=1
 
@@ -120,14 +110,6 @@ class Jaspers_MCTS_Agent:
     outcome_value = self.get_outcome(board_state)
     return outcome_value
 
-  def move_leads_to_a_finished_game(self, move, board_state):
-    ''' Check if the move leads to a finished game '''
-    new_active_box = self.active_box_after_move(move, board_state)
-    #if that box is done. return True
-    if self.subgame_terminated != -3:  # game is done
-      return True
-
-    return False
 
   def active_box_after_move(self, move, board_state):
     ''' returns the active box after the move is made '''
@@ -448,26 +430,26 @@ class Jaspers_MCTS_Agent:
 ## For Testing/debugging
 
 # Mock input data
-# board_dict = {
-#     'board_state': np.zeros((9, 9)),  # Example of a 9x9 board with all zeros
-#     'active_box': (1, 1),  # Example of the active box
-#     'valid_moves': [(3, 3), (3, 4), (3, 5), (4, 3), (4, 5), (5, 3), (5, 4),
-#                     (5, 5)]  # Example of valid moves
-# }
-# # First opponent move
-# board_dict['board_state'][4, 4] = -1
-# board_state = board_dict['board_state']
+board_dict = {
+    'board_state': np.zeros((9, 9)),  # Example of a 9x9 board with all zeros
+    'active_box': (1, 1),  # Example of the active box
+    'valid_moves': [(3, 3), (3, 4), (3, 5), (4, 3), (4, 5), (5, 3), (5, 4),
+                    (5, 5)]  # Example of valid moves
+}
+# First opponent move
+board_dict['board_state'][4, 4] = -1
+board_state = board_dict['board_state']
 
-# # Instantiate MCTS agent
-# mcts_agent = Jaspers_MCTS_Agent()
+# Instantiate MCTS agent
+mcts_agent = Jaspers_MCTS_Agent()
 
-# # Test expansion - Print the tree
-# # root_node = TreeNode(board_dict['board_state'])
-# # mcts_agent.expansion(root_node, [(1, 1), (2, 2), (3, 3)])  # Example valid moves
-# # mcts_agent.print_tree(root_node)
+# Test expansion - Print the tree
+# root_node = TreeNode(board_dict['board_state'])
+# mcts_agent.expansion(root_node, [(1, 1), (2, 2), (3, 3)])  # Example valid moves
+# mcts_agent.print_tree(root_node)
 
-# # Call move function
-# selected_move = mcts_agent.move(board_dict)
+# Call move function
+selected_move = mcts_agent.move(board_dict)
 
-# # Inspect output
-# print("Selected move:", selected_move)
+# Inspect output
+print("Selected move:", selected_move)

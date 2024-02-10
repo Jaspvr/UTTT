@@ -11,7 +11,7 @@ class Random_Bot:
         return random.choice(valid_moves)
 
 
-#Quick test:
+# Quick test:
 # board_dict = {
 #     'board_state': np.zeros((9, 9)),  # Example of a 9x9 board with all zeros
 #     'active_box': (1, 1),  # Example of the active box

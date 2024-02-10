@@ -3,8 +3,6 @@ from random_bot import Random_Bot
 from mcts_bot import Jaspers_MCTS_Agent
 
 import numpy as np
-import random
-import math
 
 
 class bvb_engine:
@@ -78,7 +76,6 @@ class bvb_engine:
         
         # Return their move tuple
         return user_input
-
 
 
 # Create an initial game state to feed to a bot

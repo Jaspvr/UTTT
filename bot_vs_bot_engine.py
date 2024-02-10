@@ -3,8 +3,6 @@ from random_bot import Random_Bot
 from mcts_bot import Jaspers_MCTS_Agent
 
 import numpy as np
-import random
-import math
 
 
 class bvb_engine:
@@ -61,7 +59,6 @@ class bvb_engine:
     
 
 
-
 # Create an initial game state to feed to a bot
 board_dict = {
     'board_state': np.zeros((9, 9)),  # Initial board
@@ -74,7 +71,7 @@ game_engine = bvb_engine()
 
 wins = 0
 i = 0
-while i < 50:
+while i < 1:
     # Run the game
     winner, end_state = bvb_engine.simulate_bot_game(game_engine, board_dict)
     if winner == "jaspers_bot":
