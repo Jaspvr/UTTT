@@ -46,7 +46,7 @@ class Jaspers_MCTS_Agent:
                           )
 
     count = 0
-    while count < 25:
+    while count < 40:
 
       #Selection phase: Traverse from the root node to a leaf node
       selected_leaf_node = self.selection(
