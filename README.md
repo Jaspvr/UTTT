@@ -2,7 +2,7 @@
 Ultimate Tic Tac Toe is a complex variation of tic tac toe involving 1 large board of 9 subgames of tic tac toe. More info on the game rules can be found here: https://en.wikipedia.org/wiki/Ultimate_tic-tac-toe. This repository contains an AI to optimally play UTTT.
 
 # Monte Carlo Tree Search
-The UTTT bot in this repo uses a Monte Carlo Search Tree to find the most optimal move.
+The UTTT bot, mcts_bot, in this repo uses a Monte Carlo Search Tree to find the most optimal move.
 
 When the UTTT bot is called it is passed a game state that it then represents as the root node of the game tree. Each valid move from this root state are then represented by children nodes of the root node, each valid move from the children states are represented as children of these nodes, and so on.
 
