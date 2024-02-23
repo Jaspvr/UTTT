@@ -14,6 +14,8 @@ Simulation: Simulate a random sequence of moves from each 'player' until a termi
 Backpropagation: Propogate results back up the tree (wins, draws, losses) to contribute to the rating of the moves that were taken to lead to the end state
 
 The more iterations of this search, the stronger a move the bot will make
+<img width="516" alt="image" src="https://github.com/Jaspvr/UTTT/assets/114035580/4a25a54c-d819-4edc-b6e5-19912de0d506">
+
 
 
 # Game engines / How to see the bot in action
