@@ -22,4 +22,7 @@ The more iterations of this search, the stronger a move the bot will make
 - The bot vs player game engine can be run to play the MCTS bot in the command line
 - The bot vs bot game engine can be run to see the result between a random moves bot and the MCTS bot over several games - other bots could be added in.
 
-There is currently no UI for playing this AI - coming soon!
+There is currently no UI for playing this AI - coming soon! The current visual is in the command line:
+<img width="485" alt="image" src="https://github.com/Jaspvr/UTTT/assets/114035580/ca3e9b97-c9fb-4c7e-a30e-47f01c8b7897">
+<img width="242" alt="image" src="https://github.com/Jaspvr/UTTT/assets/114035580/36f0807c-9d70-429a-8c0c-c97c9ac06e50">
+
