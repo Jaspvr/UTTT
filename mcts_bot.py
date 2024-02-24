@@ -26,7 +26,7 @@ class TreeNode:
 
 class Jaspers_MCTS_Agent:
   ''' Monte Carlo Search Tree UTTT player, move function returns it's next move '''
-  def __init__(self, name: str = 'jaspers_bot', debug=True):
+  def __init__(self, name: str = 'mcts_bot', debug=True):
     self.name = name
 
   def move(self, board_dict: dict) -> tuple:
@@ -46,7 +46,7 @@ class Jaspers_MCTS_Agent:
     # Search tree loop: builds out a game tree by performing a leaf node selection, expansion, simulation, and 
     #   back propogation starting at the root node
     count = 0
-    while count < 10:
+    while count < 100:
 
       #Selection phase: Traverse from the root node to a leaf node
       selected_leaf_node = self.selection(root_node)  # We now have the leaf node to work with
@@ -210,7 +210,7 @@ class Jaspers_MCTS_Agent:
   def selection(self, node):  #QJKAPROVE #Approve
     ''' Look at children, go to one with highest ucb, go until reach leaf node, this is the selected node for expansion '''
     # Define the exploration constant
-    exploration_constant = 1.41
+    exploration_constant = 1.55
 
     # Traverse down the tree until a leaf node is reached
     while not all(child is None for child in
