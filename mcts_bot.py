@@ -1,6 +1,10 @@
 import numpy as np
 import math
 import random
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from policy_network import PolicyNetwork
 
 
 class TreeNode:
@@ -28,6 +32,7 @@ class Jaspers_MCTS_Agent:
   ''' Monte Carlo Search Tree UTTT player, move function returns it's next move '''
   def __init__(self, name: str = 'mcts_bot', debug=True):
     self.name = name
+    self.policy_network = PolicyNetwork(input_size=2, hidden_size=30, output_size=80)  # Initialize the policy network
 
   def move(self, board_dict: dict) -> tuple:
     ''' Return the move that the agent wants to make given the current board state and available moves '''
@@ -46,7 +51,7 @@ class Jaspers_MCTS_Agent:
     # Search tree loop: builds out a game tree by performing a leaf node selection, expansion, simulation, and 
     #   back propogation starting at the root node
     count = 0
-    while count < 100:
+    while count < 10:
 
       #Selection phase: Traverse from the root node to a leaf node
       selected_leaf_node = self.selection(root_node)  # We now have the leaf node to work with
@@ -73,7 +78,50 @@ class Jaspers_MCTS_Agent:
   
     move_to_make = max_child.init_move  # Get the move cooresponding to the child node
 
-    return move_to_make 
+    return move_to_make
+
+  def selection(self, node):  
+        ''' Select the next node to explore using UCB and policy network '''
+        exploration_constant = 1.55
+
+        while not all(child is None for child in node.children):
+            ucb_values = [
+                self.calculate_ucb(child, exploration_constant, node.visits)
+                for child in node.children
+            ]
+
+            # Use the policy network to estimate the value of each child node
+            # Only use the policy network for when the mini game is defined
+            if len(node.children) <= 9:
+              # Calculate the row and column indices of the sub-box
+              m = node.children[0].init_move
+              sub_row = m[0] // 3
+              sub_col = m[1] // 3
+              minibox = (sub_row, sub_col)
+              mini_board = self.pull_mini_board(node.state, minibox)
+              print(mini_board)
+              policy_values = []
+              for child in node.children:
+                  mini_move = self.map_to_mini_box(m)
+                  policy_value = self.policy_network.forward(child.init_move, mini_move, mini_board)
+                  policy_values.append(policy_value)
+
+            # Combine UCB values and policy values to select the child node
+            combined_values = [ucb + policy for ucb, policy in zip(ucb_values, policy_values)]
+            selected_index = combined_values.index(max(combined_values))
+            node = node.children[selected_index]
+
+        return node
+
+  def calculate_ucb(self, node, exploration_constant, parent_visits):
+    ''' Calculate the ucb score for selecting the best node during selection process '''
+    if node.visits == 0:
+      return float('inf')  # Prioritize unvisited nodes
+    else:
+      exploitation_term = node.value / node.visits
+      exploration_term = exploration_constant * math.sqrt(
+          math.log(parent_visits) / node.visits)
+      return exploitation_term + exploration_term 
 
   def backpropogate(self, selected_leaf_node, reward):
     ''' Return add the value of the result of the simulation up the tree '''
@@ -207,36 +255,47 @@ class Jaspers_MCTS_Agent:
     return whos_move_value
 
   #approved
-  def selection(self, node):  #QJKAPROVE #Approve
-    ''' Look at children, go to one with highest ucb, go until reach leaf node, this is the selected node for expansion '''
-    # Define the exploration constant
-    exploration_constant = 1.55
+  # def selection(self, node):  #QJKAPROVE #Approve
+  #   ''' Look at children, go to one with highest ucb, go until reach leaf node, this is the selected node for expansion '''
+  #   # Define the exploration constant
+  #   exploration_constant = 1.55
 
-    # Traverse down the tree until a leaf node is reached
-    while not all(child is None for child in
-                  node.children):  #at a leaf node when all children are None
-      # Calculate UCB values for each child node
-      ucb_values = [
-          self.calculate_ucb(child, exploration_constant, node.visits)
-          for child in node.children
-      ]  #cheeky list comprehension
+  #   # Traverse down the tree until a leaf node is reached
+  #   while not all(child is None for child in
+  #                 node.children):  #at a leaf node when all children are None
+  #     # Calculate UCB values for each child node
+  #     ucb_values = [
+  #         self.calculate_ucb(child, exploration_constant, node.visits)
+  #         for child in node.children
+  #     ]  #cheeky list comprehension
 
-      # Select the child node with the highest UCB value
-      selected_index = ucb_values.index(max(ucb_values))
-      node = node.children[selected_index]
+  #     # Select the child node with the highest UCB value
+  #     selected_index = ucb_values.index(max(ucb_values))
+  #     node = node.children[selected_index]
 
-    return node
+  #   return node
 
-  def calculate_ucb(self, node, exploration_constant, parent_visits):
-    ''' Calculate the ucb score for selecting the best node during selection process '''
-    if node.visits == 0:
-      return float('inf')  # Prioritize unvisited nodes
-    else:
-      exploitation_term = node.value / node.visits
-      exploration_term = exploration_constant * math.sqrt(
-          math.log(parent_visits) / node.visits)
-      return exploitation_term + exploration_term
+  # def selection(self, node):
+  #       '''Select the best child node based on UCB and policy network'''
+  #       while not all(child is None for child in node.children):
+  #           ucb_values = [
+  #               self.calculate_ucb(child, node.visits)
+  #               for child in node.children
+  #           ]
 
+  #           # Obtain action probabilities from the policy network
+  #           state_tensor = torch.tensor(node.state, dtype=torch.float32).unsqueeze(0)
+  #           action_probs = self.policy_network(state_tensor)
+  #           action_probs = action_probs.squeeze().detach().numpy()
+
+  #           # Combine UCB values with action probabilities
+  #           combined_values = [ucb + action_probs[i] for i, ucb in enumerate(ucb_values)]
+
+  #           # Select the child node with the highest combined value
+  #           selected_index = combined_values.index(max(combined_values))
+  #           node = node.children[selected_index]
+
+  #       return node
 
   def expansion(self, leaf_node, valid_moves):
     """ Expand the tree by creating child nodes for the selected leaf node.Assign the leaf node as the parent of each child node."""
@@ -407,6 +466,12 @@ class Jaspers_MCTS_Agent:
 
     # If no winner yet
     return -3
+
+  def map_to_mini_box(self, move):
+    # Get the row and column indices of the move within the mini-box
+    mini_row = move[0] % 3
+    mini_col = move[1] % 3
+    return (mini_row, mini_col)
 
   def print_tree(self, node, level=0):
     """ Prints the tree from the given node. """
