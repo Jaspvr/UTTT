@@ -56,6 +56,24 @@ class bvb_engine:
 
         # Return the winner and the final board state
         return winner, board_dict['board_state']
+
+    def format_board(self, board):
+        formatted_board = ''
+        for i in range(len(board)):
+            if i % 3 == 0 and i != 0:
+                formatted_board += '-' * 25 + '\n'
+            for j in range(len(board[i])):
+                if j % 3 == 0 and j != 0:
+                    formatted_board += '| '
+                formatted_board += ' '
+                if board[i][j] == 1:
+                    formatted_board += 'X '
+                elif board[i][j] == -1:
+                    formatted_board += 'O '
+                else:
+                    formatted_board += '. '
+            formatted_board += '\n'
+        return formatted_board
     
 
 
@@ -74,15 +92,15 @@ i = 0
 while i < 1:
     # Run the game
     winner, end_state = bvb_engine.simulate_bot_game(game_engine, board_dict)
-    if winner == "jaspers_bot":
+    if winner == "mcts_bot":
         wins+=1
-        print("W")
+        # print("W")
     else:
         print("L")
     i+=1
 
-print(end_state)
+print(game_engine.format_board(end_state))
 print("The winner is: ")
 print(winner)
-print(wins)
+# print(wins)
 
