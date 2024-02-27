@@ -10,18 +10,12 @@ class PolicyNetwork(nn.Module):
         self.fc1 = nn.Linear(input_size, hidden_size)
         self.fc2 = nn.Linear(hidden_size, output_size)
 
-    def forward(self, x, mini_move, mini_board):
-        ''' x is the actual move on the big board'''
-        print(x, mini_move, mini_board)
+    def forward(self, x):
+        ''' x is the tensor for the neural network to make predictions on'''
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
         return F.softmax(x, dim=1)
 
-    def map_to_mini_box(move):
-        # Get the row and column indices of the move within the mini-box
-        mini_row = move[0] % 3
-        mini_col = move[1] % 3
-        return (mini_row, mini_col)
 # class MCTS:
 #     def __init__(self, policy_network, exploration_constant):
 #         self.policy_network = policy_network

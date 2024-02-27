@@ -32,7 +32,7 @@ class Jaspers_MCTS_Agent:
   ''' Monte Carlo Search Tree UTTT player, move function returns it's next move '''
   def __init__(self, name: str = 'mcts_bot', debug=True):
     self.name = name
-    self.policy_network = PolicyNetwork(input_size=2, hidden_size=30, output_size=80)  # Initialize the policy network
+    self.policy_network = PolicyNetwork(input_size=83, hidden_size=30, output_size=1)  # Initialize the policy network
 
   def move(self, board_dict: dict) -> tuple:
     ''' Return the move that the agent wants to make given the current board state and available moves '''
@@ -90,26 +90,38 @@ class Jaspers_MCTS_Agent:
                 for child in node.children
             ]
 
-            # Use the policy network to estimate the value of each child node
-            # Only use the policy network for when the mini game is defined
-            if len(node.children) <= 9:
-              # Calculate the row and column indices of the sub-box
-              m = node.children[0].init_move
-              sub_row = m[0] // 3
-              sub_col = m[1] // 3
-              minibox = (sub_row, sub_col)
-              mini_board = self.pull_mini_board(node.state, minibox)
-              print(mini_board)
-              policy_values = []
-              for child in node.children:
-                  mini_move = self.map_to_mini_box(m)
-                  policy_value = self.policy_network.forward(child.init_move, mini_move, mini_board)
-                  policy_values.append(policy_value)
+            child_moves = []
+            for child in node.children:
+              child_moves.append(child.init_move)
 
-            # Combine UCB values and policy values to select the child node
-            combined_values = [ucb + policy for ucb, policy in zip(ucb_values, policy_values)]
-            selected_index = combined_values.index(max(combined_values))
-            node = node.children[selected_index]
+            flag = False
+            flag2 = False
+            # Use the policy network to estimate the value of each child node
+            policy_values = []
+            if len(child_moves) <= 9:
+              try:
+                for child in node.children:
+                    policy_value = self.policy_network_output(node.state, child.init_move)
+                    policy_values.append(policy_value)
+                    # print('hi')
+                    flag = True
+              except Exception as e:
+                print('policy failed')
+
+            try: 
+              if flag:
+                # Combine UCB values and policy values to select the child node
+                combined_values = [ucb + policy for ucb, policy in zip(ucb_values, policy_values)]
+                selected_index = combined_values.index(max(combined_values))
+                node = node.children[selected_index]
+            except Exception as e:
+              print('policy failed')
+              flag2 = True
+            
+            if flag2 or not flag: 
+              selected_index = ucb_values.index(max(ucb_values))
+              node = node.children[selected_index]
+
 
         return node
 
@@ -122,6 +134,34 @@ class Jaspers_MCTS_Agent:
       exploration_term = exploration_constant * math.sqrt(
           math.log(parent_visits) / node.visits)
       return exploitation_term + exploration_term 
+    
+  def policy_network_output(self, board_state, move):
+    #Assuming you have already instantiated your policy network
+    # policy_network = PolicyNetwork(input_size=83, hidden_size=30, output_size=1)  # Adjusted input_size to 83
+
+    # Assuming 'board_state' is your 9x9 numpy array representing the board state
+    # and 'move' is the tuple coordinate representing the move
+    # board_state = np.zeros((9, 9))
+    # move = (0,0)
+
+    # Flatten the board state
+    flattened_board_state = board_state.flatten()
+
+    # Concatenate the flattened board state with the move tuple
+    input_features = np.concatenate((flattened_board_state, move), axis=None)
+
+    # Convert the input features to a PyTorch tensor
+    input_tensor = torch.tensor(input_features, dtype=torch.float32)
+    input_tensor = input_tensor.unsqueeze(0)  # Add a batch dimension
+
+    # Forward pass through the policy network
+    output_value = self.policy_network(input_tensor)
+
+    # Extract the output value
+    output_value = output_value.item()
+
+    print(output_value)
+
 
   def backpropogate(self, selected_leaf_node, reward):
     ''' Return add the value of the result of the simulation up the tree '''
