@@ -18,7 +18,13 @@ class PolicyNetwork(nn.Module):
         x = self.fc2(x)
         return F.softmax(x, dim=1)
     
+
+# Plan: Pass in the active mini board, output a rating for each square
+    # find which ones coorespond to valid moves, and then add the rating to the ucb for each valid moves
+    # train with games that are one move away from winning
+    
 train_input = 
+
 
 # Assume you have your training data (train_input, train_target) and validation data (val_input, val_target) ready
 
