@@ -81,49 +81,48 @@ class Jaspers_MCTS_Agent:
     return move_to_make
 
   def selection(self, node):  
-        ''' Select the next node to explore using UCB and policy network '''
-        exploration_constant = 1.55
+    ''' Select the next node to explore using UCB and policy network '''
+    exploration_constant = 1.55
 
-        while not all(child is None for child in node.children):
-            ucb_values = [
-                self.calculate_ucb(child, exploration_constant, node.visits)
-                for child in node.children
-            ]
+    while not all(child is None for child in node.children):
+        ucb_values = [
+            self.calculate_ucb(child, exploration_constant, node.visits)
+            for child in node.children
+        ]
 
-            child_moves = []
-            for child in node.children:
-              child_moves.append(child.init_move)
+        child_moves = []
+        for child in node.children:
+          child_moves.append(child.init_move)
 
-            flag = False
-            flag2 = False
-            # Use the policy network to estimate the value of each child node
-            policy_values = []
-            if len(child_moves) <= 9:
-              try:
-                for child in node.children:
-                    policy_value = self.policy_network_output(node.state, child.init_move)
-                    policy_values.append(policy_value)
-                    # print('hi')
-                    flag = True
-              except Exception as e:
-                print('policy failed')
-
-            try: 
-              if flag:
-                # Combine UCB values and policy values to select the child node
-                combined_values = [ucb + policy for ucb, policy in zip(ucb_values, policy_values)]
-                selected_index = combined_values.index(max(combined_values))
-                node = node.children[selected_index]
-            except Exception as e:
-              print('policy failed')
-              flag2 = True
-            
-            if flag2 or not flag: 
-              selected_index = ucb_values.index(max(ucb_values))
-              node = node.children[selected_index]
+        flag = False
+        flag2 = False
+        # Use the policy network to estimate the value of each child node
+        policy_values = []
+        if len(child_moves) <= 9:
+          for child in node.children:
+            policy_value = self.policy_network_output(node.state, child.init_move)
+            print(node.state, child.init_move, policy_value)
+            print()
+            if policy_value is not None:  # Check if policy value is successfully computed
+                policy_values.append(policy_value)
+            else:
+              pass
+              print(policy_value)
+          if policy_values:  # Check if policy_values is not empty
+              flag = True
 
 
-        return node
+        if flag:
+          # Combine UCB values and policy values to select the child node
+          combined_values = [ucb + policy for ucb, policy in zip(ucb_values, policy_values) if policy is not None]
+          if combined_values:  # Check if the list is not empty
+            selected_index = combined_values.index(max(combined_values))
+            node = node.children[selected_index]
+        
+        if flag2 or not flag: 
+          selected_index = ucb_values.index(max(ucb_values))
+          node = node.children[selected_index]
+    return node
 
   def calculate_ucb(self, node, exploration_constant, parent_visits):
     ''' Calculate the ucb score for selecting the best node during selection process '''
@@ -136,14 +135,6 @@ class Jaspers_MCTS_Agent:
       return exploitation_term + exploration_term 
     
   def policy_network_output(self, board_state, move):
-    #Assuming you have already instantiated your policy network
-    # policy_network = PolicyNetwork(input_size=83, hidden_size=30, output_size=1)  # Adjusted input_size to 83
-
-    # Assuming 'board_state' is your 9x9 numpy array representing the board state
-    # and 'move' is the tuple coordinate representing the move
-    # board_state = np.zeros((9, 9))
-    # move = (0,0)
-
     # Flatten the board state
     flattened_board_state = board_state.flatten()
 
@@ -161,6 +152,8 @@ class Jaspers_MCTS_Agent:
     output_value = output_value.item()
 
     print(output_value)
+
+    return output_value
 
 
   def backpropogate(self, selected_leaf_node, reward):
