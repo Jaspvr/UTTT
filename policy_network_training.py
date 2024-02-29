@@ -49,6 +49,7 @@ def check_winner(player):
 
 # Given the board (9 element array/tensor), returns a list of the winning move indices, or -1 is there are none
 def determine_winning_moves(board):
+    board = list(board)
     # Check winning moves for 1s (our moves)
     winning_moves_list = []
     for i, val in enumerate(board):
@@ -82,28 +83,44 @@ for board in board_configurations:
 # Instantiate the neural network
 net = PolicyNetwork()
 
+# Convert data to tensors
+X_train = torch.tensor([board for board, _ in dataset], dtype=torch.float32)
+y_train = []
+
+# Handle different types of labels
+for _, label in dataset:
+    if isinstance(label, list):  # If label is a list of winning moves
+        # Create a list where each element corresponds to the index of the winning move in the board state
+        label_list = [-1] * 9  # Initialize with -1 (no winning move)
+        for move in label:
+            label_list[move] = 1  # Set the index of the winning move to 1
+        y_train.append(label_list)
+    else:  # If label is -1 (no winning moves)
+        y_train.append([-1] * 9)  # Add a list of -1s
+
+# Convert y_train to tensor
+y_train = torch.tensor(y_train, dtype=torch.float32) 
+
 # Define your loss function
-# criterion = nn.CrossEntropyLoss()
+criterion = nn.BCEWithLogitsLoss()
 
-# # Define your optimizer
-# optimizer = optim.Adam(net.parameters(), lr=0.001)
+# Define your optimizer
+optimizer = optim.Adam(net.parameters(), lr=0.001)
 
-# # Assuming you have data_loader and labels (winning moves) ready
-# for epoch in range(num_epochs):
-#     running_loss = 0.0
-#     for data, labels in data_loader:
-#         optimizer.zero_grad()
-#         outputs = net(data)
-#         loss = criterion(outputs, labels)
-#         loss.backward()
-#         optimizer.step()
-#         running_loss += loss.item()
-#     print(f"Epoch {epoch+1}, Loss: {running_loss/len(data_loader)}")
+# Create DataLoader
+batch_size = 32
+dataset = TensorDataset(X_train, y_train)
+data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
-# # After training, you can use the model to predict winning moves
-# # Example usage:
-# input_board = torch.tensor([your_input_board], dtype=torch.float32)
-# predicted_probabilities = net(input_board)
-# predicted_move = torch.argmax(predicted_probabilities).item()
-# print("Predicted Winning Move:", predicted_move)
-
+# Train the network
+num_epochs = 10
+for epoch in range(num_epochs):
+    running_loss = 0.0
+    for data, labels in data_loader:
+        optimizer.zero_grad()
+        outputs = net(data)
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
+        running_loss += loss.item()
+    print(f"Epoch {epoch+1}, Loss: {running_loss/len(data_loader)}")
