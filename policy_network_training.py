@@ -113,7 +113,7 @@ dataset = TensorDataset(X_train, y_train)
 data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
 # Train the network
-num_epochs = 10
+num_epochs = 100
 for epoch in range(num_epochs):
     running_loss = 0.0
     for data, labels in data_loader:
