@@ -10,6 +10,7 @@ model.eval()  # Set the model to evaluation mode
 input_board = torch.tensor([[1, 1, 0, 0, 0, 0, 0, 0, 0]], dtype=torch.float32)
 
 # Make predictions using the loaded model
+predicted_moves = None
 with torch.no_grad():
     predicted_probabilities = model(input_board)
     predicted_moves = torch.argmax(predicted_probabilities, dim=1)

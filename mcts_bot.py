@@ -32,7 +32,7 @@ class Jaspers_MCTS_Agent:
   ''' Monte Carlo Search Tree UTTT player, move function returns it's next move '''
   def __init__(self, name: str = 'mcts_bot', debug=True):
     self.name = name
-    self.policy_network = PolicyNetwork(input_size=83, hidden_size=30, output_size=1)  # Initialize the policy network
+    # self.policy_network = PolicyNetwork(input_size=83, hidden_size=30, output_size=1)  # Initialize the policy network
 
   def move(self, board_dict: dict) -> tuple:
     ''' Return the move that the agent wants to make given the current board state and available moves '''
@@ -95,22 +95,19 @@ class Jaspers_MCTS_Agent:
           child_moves.append(child.init_move)
 
         flag = False
-        flag2 = False
         # Use the policy network to estimate the value of each child node
         policy_values = []
-        if len(child_moves) <= 9:
-          for child in node.children:
-            policy_value = self.policy_network_output(node.state, child.init_move)
-            print(node.state, child.init_move, policy_value)
-            print()
-            if policy_value is not None:  # Check if policy value is successfully computed
-                policy_values.append(policy_value)
-            else:
-              pass
-              print(policy_value)
-          if policy_values:  # Check if policy_values is not empty
-              flag = True
+        if node.active_box != (-1, -1):
+          # Pass in the board state, and all the valid moves
+          policy_value_tuples = self.policy_network_output(node.state, node.valid_moves)
 
+          if policy_values:
+            flag = True
+
+          # policy_values_tuples now contains a list of tuples of the valid moves and their
+          # cooresponding neural network output
+          policy_values = [policy_value_tuple[1] for policy_value_tuple in policy_value_tuples]
+          
 
         if flag:
           # Combine UCB values and policy values to select the child node
@@ -119,7 +116,7 @@ class Jaspers_MCTS_Agent:
             selected_index = combined_values.index(max(combined_values))
             node = node.children[selected_index]
         
-        if flag2 or not flag: 
+        if not flag: 
           selected_index = ucb_values.index(max(ucb_values))
           node = node.children[selected_index]
     return node
@@ -134,26 +131,43 @@ class Jaspers_MCTS_Agent:
           math.log(parent_visits) / node.visits)
       return exploitation_term + exploration_term 
     
-  def policy_network_output(self, board_state, move):
-    # Flatten the board state
-    flattened_board_state = board_state.flatten()
+  def policy_network_output(self, board_state, valid_moves, active_box):
+    # Get the mini board and map each valid move to the index on the array
+    mini_board = self.pull_mini_board(board_state, active_box)
+    mini_board_array = mini_board.flatten()
 
-    # Concatenate the flattened board state with the move tuple
-    input_features = np.concatenate((flattened_board_state, move), axis=None)
+    # For every valid move, get that move on the mini board make a mapping so we can go back
+    valid_moves_big_and_small = [(valid_move, self.map_to_mini_box(valid_move)) for valid_move in valid_moves]
+    small_valid_moves = [move[1] for move in valid_moves_big_and_small]
+    valid_moves_big_and_array = [(valid_move_tuple[0], self.small_coords_to_arr_index(valid_move_tuple[1])) for valid_move_tuple in valid_moves_big_and_small]
 
-    # Convert the input features to a PyTorch tensor
-    input_tensor = torch.tensor(input_features, dtype=torch.float32)
-    input_tensor = input_tensor.unsqueeze(0)  # Add a batch dimension
+    # Load the saved model
+    model = PolicyNetwork()
+    model.load_state_dict(torch.load('policy_network_model.pth'))
+    model.eval()  # Set the model to evaluation mode
 
-    # Forward pass through the policy network
-    output_value = self.policy_network(input_tensor)
+    # Assuming you have an input_board as a torch tensor
+    # tensor accepts it like this: [[0, 0, 0, 0, 0, 0, 0, 0, 0]]
+    input_board = torch.tensor([mini_board_array], dtype=torch.float32)
 
-    # Extract the output value
-    output_value = output_value.item()
+    # Make predictions using the loaded model
+    predicted_moves = None
+    with torch.no_grad():
+      predicted_probabilities = model(input_board)
+      predicted_moves = torch.argmax(predicted_probabilities, dim=1)
 
-    print(output_value)
+    
+    # Map each valid move to it's cooresponding neural network output
+      # we have neural network output at each index, we have the move that cooresponds to each index
+    move_and_weight = []
+    idx = 0
+    while idx < len(predicted_moves):
+      for valid_moves_big_and_array in valid_moves_big_and_array:
+        if(valid_moves_big_and_array[1]==idx):
+          # Then the big valid move here is the one that coorresponds to the predicted weight
+          move_and_weight.append((valid_moves_big_and_array, predicted_moves[idx]))
 
-    return output_value
+    return move_and_weight
 
 
   def backpropogate(self, selected_leaf_node, reward):
@@ -307,28 +321,6 @@ class Jaspers_MCTS_Agent:
   #     node = node.children[selected_index]
 
   #   return node
-
-  # def selection(self, node):
-  #       '''Select the best child node based on UCB and policy network'''
-  #       while not all(child is None for child in node.children):
-  #           ucb_values = [
-  #               self.calculate_ucb(child, node.visits)
-  #               for child in node.children
-  #           ]
-
-  #           # Obtain action probabilities from the policy network
-  #           state_tensor = torch.tensor(node.state, dtype=torch.float32).unsqueeze(0)
-  #           action_probs = self.policy_network(state_tensor)
-  #           action_probs = action_probs.squeeze().detach().numpy()
-
-  #           # Combine UCB values with action probabilities
-  #           combined_values = [ucb + action_probs[i] for i, ucb in enumerate(ucb_values)]
-
-  #           # Select the child node with the highest combined value
-  #           selected_index = combined_values.index(max(combined_values))
-  #           node = node.children[selected_index]
-
-  #       return node
 
   def expansion(self, leaf_node, valid_moves):
     """ Expand the tree by creating child nodes for the selected leaf node.Assign the leaf node as the parent of each child node."""
@@ -505,6 +497,9 @@ class Jaspers_MCTS_Agent:
     mini_row = move[0] % 3
     mini_col = move[1] % 3
     return (mini_row, mini_col)
+  
+  def small_coords_to_arr_index(self, coord):
+    return (coord[0]*3) + (coord[1])
 
   def print_tree(self, node, level=0):
     """ Prints the tree from the given node. """
