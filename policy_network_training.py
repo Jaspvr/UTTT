@@ -4,27 +4,9 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 import numpy as np
+from policy_network import PolicyNetwork
 
 import itertools
-
-# Full neural network class here - should be good
-class PolicyNetwork(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.dl1 = nn.Linear(9, 36)
-        self.dl2 = nn.Linear(36, 36)
-        self.output_layer = nn.Linear(36, 9)
-
-    def forward(self, x):
-        x = self.dl1(x)
-        x = torch.relu(x)
-
-        x = self.dl2(x)
-        x = torch.relu(x)
-
-        x = self.output_layer(x)
-        x = torch.softmax(x, dim=1)  # Use softmax for multi-class classification
-        return x
     
 
 # Generate all possible board configurations
@@ -113,7 +95,7 @@ dataset = TensorDataset(X_train, y_train)
 data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
 # Train the network
-num_epochs = 100
+num_epochs = 10
 for epoch in range(num_epochs):
     running_loss = 0.0
     for data, labels in data_loader:
@@ -124,3 +106,8 @@ for epoch in range(num_epochs):
         optimizer.step()
         running_loss += loss.item()
     print(f"Epoch {epoch+1}, Loss: {running_loss/len(data_loader)}")
+
+
+# Save the trained model
+torch.save(net.state_dict(), 'policy_network_model.pth')
+
