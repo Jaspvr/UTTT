@@ -102,5 +102,4 @@ while i < 1:
 print(game_engine.format_board(end_state))
 print("The winner is: ")
 print(winner)
-# print(wins)
 

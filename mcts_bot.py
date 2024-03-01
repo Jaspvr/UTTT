@@ -52,8 +52,7 @@ class Jaspers_MCTS_Agent:
     #   back propogation starting at the root node
     count = 0
     while count < 10:
-      print(count)
-      # self.print_tree(root_node)
+      # print(count)
 
       #Selection phase: Traverse from the root node to a leaf node
       selected_leaf_node = self.selection(root_node)  # We now have the leaf node to work with
@@ -87,42 +86,38 @@ class Jaspers_MCTS_Agent:
     exploration_constant = 1.55
 
     while not all(child is None for child in node.children):
-        print("here")
-        ucb_values = [
-            self.calculate_ucb(child, exploration_constant, node.visits)
-            for child in node.children
-        ]
+      ucb_values = [
+          self.calculate_ucb(child, exploration_constant, node.visits)
+          for child in node.children
+      ]
 
-        child_moves = []
-        for child in node.children:
-          child_moves.append(child.init_move)
+      child_moves = []
+      for child in node.children:
+        child_moves.append(child.init_move)
 
-        flag = False
-        # Use the policy network to estimate the value of each child node
-        policy_values = []
-        if node.active_box != (-1, -1):
-          # Pass in the board state, and all the valid moves
-          print('h2')
-          policy_value_tuples = self.policy_network_output(node.state, node.valid_moves, node.active_box)
-          print('h3')
-          if policy_values:
-            flag = True
+      flag = False
+      # Use the policy network to estimate the value of each child node
+      policy_values = []
+      if node.active_box != (-1, -1):
+        # Pass in the board state, and all the valid moves
+        policy_value_tuples = self.policy_network_output(node.state, node.valid_moves, node.active_box)
+        if policy_values:
+          flag = True
 
-          # policy_values_tuples now contains a list of tuples of the valid moves and their
-          # cooresponding neural network output
-          policy_values = [policy_value_tuple[1] for policy_value_tuple in policy_value_tuples]
-          
-
-        if flag:
-          # Combine UCB values and policy values to select the child node
-          combined_values = [ucb + policy for ucb, policy in zip(ucb_values, policy_values) if policy is not None]
-          if combined_values:  # Check if the list is not empty
-            selected_index = combined_values.index(max(combined_values))
-            node = node.children[selected_index]
+        # policy_values_tuples now contains a list of tuples of the valid moves and their cooresponding neural network output
+        policy_values = [policy_value_tuple[1] for policy_value_tuple in policy_value_tuples]
         
-        if not flag: 
-          selected_index = ucb_values.index(max(ucb_values))
+
+      if flag:
+        # Combine UCB values and policy values to select the child node
+        combined_values = [ucb + policy for ucb, policy in zip(ucb_values, policy_values) if policy is not None]
+        if combined_values:  # Check if the list is not empty
+          selected_index = combined_values.index(max(combined_values))
           node = node.children[selected_index]
+      
+      if not flag: 
+        selected_index = ucb_values.index(max(ucb_values))
+        node = node.children[selected_index]
     return node
 
   def calculate_ucb(self, node, exploration_constant, parent_visits):
@@ -136,7 +131,6 @@ class Jaspers_MCTS_Agent:
       return exploitation_term + exploration_term 
     
   def policy_network_output(self, board_state, valid_moves, active_box):
-    # print(board_state, valid_moves, active_box)
     # Get the mini board and map each valid move to the index on the array
     mini_board = self.pull_mini_board(board_state, active_box)
     mini_board_array = mini_board.flatten()
@@ -144,16 +138,14 @@ class Jaspers_MCTS_Agent:
 
     # For every valid move, get that move on the mini board make a mapping so we can go back
     valid_moves_big_and_small = [(valid_move, self.map_to_mini_box(valid_move)) for valid_move in valid_moves]
-    small_valid_moves = [move[1] for move in valid_moves_big_and_small]
     valid_moves_big_and_array = [(valid_move_tuple[0], self.small_coords_to_arr_index(valid_move_tuple[1])) for valid_move_tuple in valid_moves_big_and_small]
 
     # Load the saved model
     model = PolicyNetwork()
     model.load_state_dict(torch.load('policy_network_model.pth'))
-    model.eval()  # Set the model to evaluation mode
+    model.eval()  # Evaluation mode
 
-    # Assuming you have an input_board as a torch tensor
-    # tensor accepts it like this: [[0, 0, 0, 0, 0, 0, 0, 0, 0]]
+    # input board as a tensor to the neural network
     input_board = torch.tensor(mini_board_array, dtype=torch.float32)
     input_board = input_board.view(1, -1)
 
@@ -169,13 +161,12 @@ class Jaspers_MCTS_Agent:
     idx = 0
     while idx < len(predicted_moves):
       for valid_move_big_and_array in valid_moves_big_and_array:
-        # print(valid_moves_big_and_array)
         if(valid_move_big_and_array[1]==idx):
           # Then the big valid move here is the one that coorresponds to the predicted weight
           move_and_weight.append((valid_move_big_and_array, predicted_moves[idx]))
 
       idx += 1
-    # print(move_and_weight)
+      
     return move_and_weight
 
 

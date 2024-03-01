@@ -20,6 +20,7 @@ def generate_board_configurations_with_a_win():
     for board in all_boards:
         if(determine_winning_moves(board)!=-1):
             new_boards.append(board)
+    return new_boards
 
 # Define winning combinations (indices)
 win_combinations = [
@@ -53,7 +54,6 @@ def determine_winning_moves(board):
 
 # Generate dataset
 board_configurations = generate_board_configurations()
-# board_configurations = generate_board_configurations_with_a_win()
 dataset = []
 
 # For every possible board, 
@@ -76,7 +76,6 @@ net = PolicyNetwork()
 X_train = torch.tensor([board for board, _ in dataset], dtype=torch.float32)
 y_train = []
 
-# Handle different types of labels
 for _, label in dataset:
     if isinstance(label, list):  # If label is a list of winning moves
         # Create a list where each element corresponds to the index of the winning move in the board state
@@ -90,10 +89,10 @@ for _, label in dataset:
 # Convert y_train to tensor
 y_train = torch.tensor(y_train, dtype=torch.float32) 
 
-# Define your loss function
+# Define loss function
 criterion = nn.BCEWithLogitsLoss()
 
-# Define your optimizer
+# Define optimizer
 optimizer = optim.Adam(net.parameters(), lr=0.001)
 
 # Create DataLoader
@@ -101,7 +100,7 @@ batch_size = 32
 dataset = TensorDataset(X_train, y_train)
 data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
-# Train the network
+# Training loop to train the network
 num_epochs = 500
 for epoch in range(num_epochs):
     running_loss = 0.0
@@ -116,6 +115,6 @@ for epoch in range(num_epochs):
     print(f"Epoch {epoch+1}, Loss: {running_loss/len(data_loader)}")
 
 
-# Save the trained model
+# Save trained model
 torch.save(net.state_dict(), 'policy_network_model.pth')
 
