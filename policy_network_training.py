@@ -14,6 +14,12 @@ def generate_board_configurations():
     empty_board = [0] * 9
     return list(itertools.product([-1, 0, 1], repeat=9))
 
+def generate_board_configurations_with_a_win():
+    all_boards = generate_board_configurations()
+    new_boards = []
+    for board in all_boards:
+        if(determine_winning_moves(board)!=-1):
+            new_boards.append(board)
 
 # Define winning combinations (indices)
 win_combinations = [
@@ -47,6 +53,7 @@ def determine_winning_moves(board):
 
 # Generate dataset
 board_configurations = generate_board_configurations()
+# board_configurations = generate_board_configurations_with_a_win()
 dataset = []
 
 # For every possible board, 
@@ -101,6 +108,7 @@ for epoch in range(num_epochs):
     for data, labels in data_loader:
         optimizer.zero_grad()
         outputs = net(data)
+        # print(outputs)
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
