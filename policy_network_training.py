@@ -71,6 +71,7 @@ for board in board_configurations:
 
 # Instantiate the neural network
 net = PolicyNetwork()
+net.load_state_dict(torch.load('policy_network_model.pth'))
 
 # Convert data to tensors
 X_train = torch.tensor([board for board, _ in dataset], dtype=torch.float32)
@@ -101,7 +102,7 @@ dataset = TensorDataset(X_train, y_train)
 data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
 # Training loop to train the network
-num_epochs = 500
+num_epochs = 5000
 for epoch in range(num_epochs):
     running_loss = 0.0
     for data, labels in data_loader:
