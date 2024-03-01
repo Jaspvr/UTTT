@@ -53,6 +53,7 @@ class Jaspers_MCTS_Agent:
     count = 0
     while count < 10:
       print(count)
+      # self.print_tree(root_node)
 
       #Selection phase: Traverse from the root node to a leaf node
       selected_leaf_node = self.selection(root_node)  # We now have the leaf node to work with
@@ -86,6 +87,7 @@ class Jaspers_MCTS_Agent:
     exploration_constant = 1.55
 
     while not all(child is None for child in node.children):
+        print("here")
         ucb_values = [
             self.calculate_ucb(child, exploration_constant, node.visits)
             for child in node.children
@@ -100,8 +102,9 @@ class Jaspers_MCTS_Agent:
         policy_values = []
         if node.active_box != (-1, -1):
           # Pass in the board state, and all the valid moves
+          print('h2')
           policy_value_tuples = self.policy_network_output(node.state, node.valid_moves, node.active_box)
-
+          print('h3')
           if policy_values:
             flag = True
 
@@ -133,10 +136,10 @@ class Jaspers_MCTS_Agent:
       return exploitation_term + exploration_term 
     
   def policy_network_output(self, board_state, valid_moves, active_box):
+    # print(board_state, valid_moves, active_box)
     # Get the mini board and map each valid move to the index on the array
     mini_board = self.pull_mini_board(board_state, active_box)
     mini_board_array = mini_board.flatten()
-    print(mini_board_array)
     mini_board_array = np.array(mini_board_array)
 
     # For every valid move, get that move on the mini board make a mapping so we can go back
@@ -159,7 +162,6 @@ class Jaspers_MCTS_Agent:
     with torch.no_grad():
       predicted_probabilities = model(input_board)
       predicted_moves = torch.argmax(predicted_probabilities, dim=1)
-
     
     # Map each valid move to it's cooresponding neural network output
       # we have neural network output at each index, we have the move that cooresponds to each index
@@ -172,7 +174,8 @@ class Jaspers_MCTS_Agent:
           # Then the big valid move here is the one that coorresponds to the predicted weight
           move_and_weight.append((valid_move_big_and_array, predicted_moves[idx]))
 
-    print(move_and_weight)
+      idx += 1
+    # print(move_and_weight)
     return move_and_weight
 
 
