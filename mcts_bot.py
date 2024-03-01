@@ -52,6 +52,7 @@ class Jaspers_MCTS_Agent:
     #   back propogation starting at the root node
     count = 0
     while count < 10:
+      print(count)
 
       #Selection phase: Traverse from the root node to a leaf node
       selected_leaf_node = self.selection(root_node)  # We now have the leaf node to work with
@@ -135,6 +136,8 @@ class Jaspers_MCTS_Agent:
     # Get the mini board and map each valid move to the index on the array
     mini_board = self.pull_mini_board(board_state, active_box)
     mini_board_array = mini_board.flatten()
+    print(mini_board_array)
+    mini_board_array = np.array(mini_board_array)
 
     # For every valid move, get that move on the mini board make a mapping so we can go back
     valid_moves_big_and_small = [(valid_move, self.map_to_mini_box(valid_move)) for valid_move in valid_moves]
@@ -148,7 +151,8 @@ class Jaspers_MCTS_Agent:
 
     # Assuming you have an input_board as a torch tensor
     # tensor accepts it like this: [[0, 0, 0, 0, 0, 0, 0, 0, 0]]
-    input_board = torch.tensor([mini_board_array], dtype=torch.float32)
+    input_board = torch.tensor(mini_board_array, dtype=torch.float32)
+    input_board = input_board.view(1, -1)
 
     # Make predictions using the loaded model
     predicted_moves = None
