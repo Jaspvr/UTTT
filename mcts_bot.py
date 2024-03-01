@@ -32,7 +32,6 @@ class Jaspers_MCTS_Agent:
   ''' Monte Carlo Search Tree UTTT player, move function returns it's next move '''
   def __init__(self, name: str = 'mcts_bot', debug=True):
     self.name = name
-    # self.policy_network = PolicyNetwork(input_size=83, hidden_size=30, output_size=1)  # Initialize the policy network
 
   def move(self, board_dict: dict) -> tuple:
     ''' Return the move that the agent wants to make given the current board state and available moves '''
@@ -51,7 +50,7 @@ class Jaspers_MCTS_Agent:
     # Search tree loop: builds out a game tree by performing a leaf node selection, expansion, simulation, and 
     #   back propogation starting at the root node
     count = 0
-    while count < 10:
+    while count < 50:
       # print(count)
 
       #Selection phase: Traverse from the root node to a leaf node
@@ -83,7 +82,7 @@ class Jaspers_MCTS_Agent:
 
   def selection(self, node):  
     ''' Select the next node to explore using UCB and policy network '''
-    exploration_constant = 1.55
+    exploration_constant = 1.65
 
     while not all(child is None for child in node.children):
       ucb_values = [
@@ -110,7 +109,7 @@ class Jaspers_MCTS_Agent:
 
       if flag:
         # Combine UCB values and policy values to select the child node
-        combined_values = [ucb + policy for ucb, policy in zip(ucb_values, policy_values) if policy is not None]
+        combined_values = [ucb + (policy/3) for ucb, policy in zip(ucb_values, policy_values) if policy is not None]
         if combined_values:  # Check if the list is not empty
           selected_index = combined_values.index(max(combined_values))
           node = node.children[selected_index]
@@ -166,7 +165,7 @@ class Jaspers_MCTS_Agent:
           move_and_weight.append((valid_move_big_and_array, predicted_moves[idx]))
 
       idx += 1
-      
+
     return move_and_weight
 
 
