@@ -99,7 +99,7 @@ class Jaspers_MCTS_Agent:
         policy_values = []
         if node.active_box != (-1, -1):
           # Pass in the board state, and all the valid moves
-          policy_value_tuples = self.policy_network_output(node.state, node.valid_moves)
+          policy_value_tuples = self.policy_network_output(node.state, node.valid_moves, node.active_box)
 
           if policy_values:
             flag = True
@@ -162,11 +162,13 @@ class Jaspers_MCTS_Agent:
     move_and_weight = []
     idx = 0
     while idx < len(predicted_moves):
-      for valid_moves_big_and_array in valid_moves_big_and_array:
-        if(valid_moves_big_and_array[1]==idx):
+      for valid_move_big_and_array in valid_moves_big_and_array:
+        # print(valid_moves_big_and_array)
+        if(valid_move_big_and_array[1]==idx):
           # Then the big valid move here is the one that coorresponds to the predicted weight
-          move_and_weight.append((valid_moves_big_and_array, predicted_moves[idx]))
+          move_and_weight.append((valid_move_big_and_array, predicted_moves[idx]))
 
+    print(move_and_weight)
     return move_and_weight
 
 
