@@ -50,18 +50,21 @@ def determine_winning_moves(board):
     
     if(len(winning_moves_list)==0):
         return -1
+    
     return winning_moves_list
 
 # Generate dataset
 board_configurations = generate_board_configurations()
+# board_configurations = generate_board_configurations_with_a_win()
 dataset = []
 
 # For every possible board, 
 for board in board_configurations:
     # Find if there is winning moves for this board
     label = determine_winning_moves(board) # Either list of moves or -1 
-    # Append a tuple of the board state and the winning moves
-    dataset.append((board, label))
+    if label != -1:
+        # Append a tuple of the board state and the winning moves
+        dataset.append((board, label))
 
 # We now have a dataset with every possible board state and the desired indices of the board state
     # for which the neural network should rate the highest
@@ -94,7 +97,7 @@ y_train = torch.tensor(y_train, dtype=torch.float32)
 criterion = nn.BCEWithLogitsLoss()
 
 # Define optimizer
-optimizer = optim.Adam(net.parameters(), lr=0.001)
+optimizer = optim.Adam(net.parameters(), lr=0.01)
 
 # Create DataLoader
 batch_size = 32
@@ -102,7 +105,7 @@ dataset = TensorDataset(X_train, y_train)
 data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
 # Training loop to train the network
-num_epochs = 5000
+num_epochs = 100
 for epoch in range(num_epochs):
     running_loss = 0.0
     for data, labels in data_loader:

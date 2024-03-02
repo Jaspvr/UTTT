@@ -50,7 +50,7 @@ class Jaspers_MCTS_Agent:
     # Search tree loop: builds out a game tree by performing a leaf node selection, expansion, simulation, and 
     #   back propogation starting at the root node
     count = 0
-    while count < 50:
+    while count < 30:
       # print(count)
 
       #Selection phase: Traverse from the root node to a leaf node
@@ -82,7 +82,7 @@ class Jaspers_MCTS_Agent:
 
   def selection(self, node):  
     ''' Select the next node to explore using UCB and policy network '''
-    exploration_constant = 1.65
+    exploration_constant = 1.85
 
     while not all(child is None for child in node.children):
       ucb_values = [
@@ -299,27 +299,6 @@ class Jaspers_MCTS_Agent:
       whos_move_value = -1
 
     return whos_move_value
-
-  #approved
-  # def selection(self, node):  #QJKAPROVE #Approve
-  #   ''' Look at children, go to one with highest ucb, go until reach leaf node, this is the selected node for expansion '''
-  #   # Define the exploration constant
-  #   exploration_constant = 1.55
-
-  #   # Traverse down the tree until a leaf node is reached
-  #   while not all(child is None for child in
-  #                 node.children):  #at a leaf node when all children are None
-  #     # Calculate UCB values for each child node
-  #     ucb_values = [
-  #         self.calculate_ucb(child, exploration_constant, node.visits)
-  #         for child in node.children
-  #     ]  #cheeky list comprehension
-
-  #     # Select the child node with the highest UCB value
-  #     selected_index = ucb_values.index(max(ucb_values))
-  #     node = node.children[selected_index]
-
-  #   return node
 
   def expansion(self, leaf_node, valid_moves):
     """ Expand the tree by creating child nodes for the selected leaf node.Assign the leaf node as the parent of each child node."""
