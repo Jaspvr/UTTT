@@ -2,13 +2,13 @@
 Ultimate Tic Tac Toe is a complex variation of tic tac toe involving 1 large board of 9 subgames of tic tac toe. More info on the game rules can be found here: https://en.wikipedia.org/wiki/Ultimate_tic-tac-toe. This repository contains an AI to optimally play UTTT.
 
 # Monte Carlo Tree Search
-The UTTT bot, mcts_bot, in this repo uses a Monte Carlo Search Tree to find the most optimal move.
+The UTTT bot, mcts_bot, in this repo uses a Monte Carlo Tree Search to find the most optimal move. A Pytorch Neural Network is used to aid the MCTS during its 'selection' phase (explained below) to ensure that good moves are explored deeply, and bad moves are not.
 
 When the UTTT bot is called it is passed a game state that it then represents as the root node of the game tree. Each valid move from this root state are then represented by children nodes of the root node, each valid move from the children states are represented as children of these nodes, and so on.
 
 Based on the following 4-step search strategy, the bot will select a valid move to send back to the engine: 
 
-Selection: Select a random leaf node (in our case this represents a game state)
+Selection: Select a random leaf node (in our case this represents a game state) - Neural Network is used here to help select nodes until a leaf is reached
 Expansion: Create subsequent child nodes on the leaf node for each valid move from this state
 Simulation: Simulate a random sequence of moves from each 'player' until a terminal state is reached
 Backpropagation: Propogate results back up the tree (wins, draws, losses) to contribute to the rating of the moves that were taken to lead to the end state
