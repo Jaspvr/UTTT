@@ -82,7 +82,7 @@ class Jaspers_MCTS_Agent:
 
   def selection(self, node):  
     ''' Select the next node to explore using UCB and policy network '''
-    exploration_constant = 1.85
+    exploration_constant = 1.5
 
     while not all(child is None for child in node.children):
       ucb_values = [
