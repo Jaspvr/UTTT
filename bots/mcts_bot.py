@@ -4,7 +4,7 @@ import random
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from policy_network import PolicyNetwork
+from neuralNetwork.policy_network import PolicyNetwork
 
 
 class TreeNode:

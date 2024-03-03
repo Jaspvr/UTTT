@@ -1,5 +1,5 @@
 import torch
-from policy_network import PolicyNetwork
+from neuralNetwork.policy_network import PolicyNetwork
 
 # Load the saved model
 model = PolicyNetwork()

@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from policy_network import PolicyNetwork
+from neuralNetwork.policy_network import PolicyNetwork
 
 # Assuming you have already instantiated your policy network
 policy_network = PolicyNetwork(input_size=83, hidden_size=30, output_size=1)  # Adjusted input_size to 83
