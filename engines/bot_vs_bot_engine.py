@@ -1,7 +1,4 @@
 # Import the bots and neccessary libraries:
-import sys
-print(sys.path)
-sys.path.append('/Users/jasperhalvorson/p/UTTT/')
 from ..bots.random_bot import Random_Bot
 from ..bots.mcts_bot import Jaspers_MCTS_Agent
 
